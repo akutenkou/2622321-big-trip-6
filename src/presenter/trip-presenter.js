@@ -3,7 +3,9 @@ import FiltersView from '../view/filters-view.js';
 import SortView from '../view/sort-view.js';
 import PointView from '../view/point-view.js';
 import EditPointView from '../view/edit-point-view.js';
+import EmptyView from '../view/empty-view.js';
 import PointsModel from '../model/points-model.js';
+import { generateFilters } from '../mock/filter-mock.js';
 
 export default class TripPresenter {
   #pointsModel = null;
@@ -13,7 +15,6 @@ export default class TripPresenter {
 
   constructor() {
     this.#pointsModel = new PointsModel();
-    this.#filtersComponent = new FiltersView();
     this.#sortComponent = new SortView();
   }
 
@@ -21,19 +22,24 @@ export default class TripPresenter {
     const filtersContainer = document.querySelector('.trip-controls__filters');
     this.#eventsContainer = document.querySelector('.trip-events');
     const points = this.#pointsModel.getPoints();
+    const hasPoints = points.length > 0;
+
+    const filters = generateFilters(hasPoints);
+    this.#filtersComponent = new FiltersView(filters);
 
     if (filtersContainer) {
       render(this.#filtersComponent, filtersContainer);
     }
 
     if (this.#eventsContainer) {
-      render(this.#sortComponent, this.#eventsContainer);
-      this.#renderPoints(points);
-    }
-  }
+      if (!hasPoints) {
+        render(new EmptyView(), this.#eventsContainer);
+        return;
+      }
 
-  #renderPoints(points) {
-    points.forEach((point) => this.#renderPoint(point));
+      render(this.#sortComponent, this.#eventsContainer);
+      points.forEach((point) => this.#renderPoint(point));
+    }
   }
 
   #renderPoint(point) {
