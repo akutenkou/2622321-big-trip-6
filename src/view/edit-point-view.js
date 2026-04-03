@@ -1,20 +1,16 @@
-export default class EditPointView {
-  constructor(point = null) {
-    this.point = point;
-    this.element = null;
+import AbstractView from '../framework/view/abstract-view.js';
+
+export default class EditPointView extends AbstractView {
+  #point = null;
+
+  constructor(point) {
+    super();
+    this.#point = point;
+    this._callback = {};
   }
 
-  getTemplate() {
-    const point = this.point || {
-      type: 'Flight',
-      destination: { name: '' },
-      dateFrom: new Date().toISOString(),
-      dateTo: new Date(Date.now() + 3600000).toISOString(),
-      basePrice: 0,
-      offers: []
-    };
-
-    const { type, destination, dateFrom, dateTo, basePrice, offers } = point;
+  get template() {
+    const { type, destination, dateFrom, dateTo, basePrice, offers } = this.#point;
 
     const startDate = new Date(dateFrom);
     const endDate = new Date(dateTo);
@@ -101,16 +97,18 @@ export default class EditPointView {
     `;
   }
 
-  getElement() {
-    if (!this.element) {
-      this.element = this.createElement(this.getTemplate());
-    }
-    return this.element;
+  setFormSubmitHandler(callback) {
+    this._callback.formSubmit = callback;
+    this.element.querySelector('form').addEventListener('submit', callback);
   }
 
-  createElement(template) {
-    const newElement = document.createElement('div');
-    newElement.innerHTML = template;
-    return newElement.firstElementChild;
+  setRollupClickHandler(callback) {
+    this._callback.rollupClick = callback;
+    this.element.querySelector('.event__rollup-btn').addEventListener('click', callback);
+  }
+
+  setCancelClickHandler(callback) {
+    this._callback.cancelClick = callback;
+    this.element.querySelector('.event__reset-btn').addEventListener('click', callback);
   }
 }

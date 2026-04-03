@@ -1,11 +1,16 @@
-export default class PointView {
+import AbstractView from '../framework/view/abstract-view.js';
+
+export default class PointView extends AbstractView {
+  #point = null;
+
   constructor(point) {
-    this.point = point;
-    this.element = null;
+    super();
+    this.#point = point;
+    this._callback = {};
   }
 
-  getTemplate() {
-    const { type, destination, dateFrom, dateTo, basePrice, offers, isFavorite } = this.point;
+  get template() {
+    const { type, destination, dateFrom, dateTo, basePrice, offers, isFavorite } = this.#point;
 
     const startDate = new Date(dateFrom);
     const endDate = new Date(dateTo);
@@ -69,16 +74,8 @@ export default class PointView {
     `;
   }
 
-  getElement() {
-    if (!this.element) {
-      this.element = this.createElement(this.getTemplate());
-    }
-    return this.element;
-  }
-
-  createElement(template) {
-    const newElement = document.createElement('div');
-    newElement.innerHTML = template;
-    return newElement.firstElementChild;
+  setRollupClickHandler(callback) {
+    this._callback.rollupClick = callback;
+    this.element.querySelector('.event__rollup-btn').addEventListener('click', callback);
   }
 }

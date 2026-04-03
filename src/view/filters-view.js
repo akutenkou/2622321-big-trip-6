@@ -1,9 +1,7 @@
-export default class FiltersView {
-  constructor() {
-    this.element = null;
-  }
+import AbstractView from '../framework/view/abstract-view.js';
 
-  getTemplate() {
+export default class FiltersView extends AbstractView {
+  get template() {
     return `
       <form class="trip-filters" action="#" method="get">
         <div class="trip-filters__filter">
@@ -24,18 +22,5 @@ export default class FiltersView {
         </div>
       </form>
     `;
-  }
-
-  getElement() {
-    if (!this.element) {
-      this.element = this.createElement(this.getTemplate());
-    }
-    return this.element;
-  }
-
-  createElement(template) {
-    const newElement = document.createElement('div');
-    newElement.innerHTML = template;
-    return newElement.firstElementChild;
   }
 }
