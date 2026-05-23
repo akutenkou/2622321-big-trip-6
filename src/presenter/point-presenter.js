@@ -11,11 +11,15 @@ export default class PointPresenter {
   #handleViewAction = null;
   #handleModeChange = null;
   #mode = 'view'; // 'view' или 'edit'
+  #destinations = [];
+  #offers = [];
 
-  constructor(container, onViewAction, onModeChange) {
+  constructor(container, onViewAction, onModeChange, destinations, offers) {
     this.#container = container;
     this.#handleViewAction = onViewAction;
     this.#handleModeChange = onModeChange;
+    this.#destinations = destinations;
+    this.#offers = offers;
   }
 
   init(point) {
@@ -25,7 +29,7 @@ export default class PointPresenter {
     const prevEditComponent = this.#editComponent;
 
     this.#pointComponent = new PointView(this.#point);
-    this.#editComponent = new EditPointView(this.#point);
+    this.#editComponent = new EditPointView(this.#point, false, this.#destinations, this.#offers);
 
     this.#pointComponent.setRollupClickHandler(this.#handleRollupClick);
     this.#pointComponent.setFavoriteClickHandler(this.#handleFavoriteClick);
