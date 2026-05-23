@@ -1,4 +1,6 @@
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
+import flatpickr from 'flatpickr';
+import 'flatpickr/dist/flatpickr.min.css';
 
 const TYPES = ['Taxi', 'Bus', 'Train', 'Ship', 'Drive', 'Flight', 'Check-in', 'Sightseeing', 'Restaurant'];
 
@@ -44,19 +46,18 @@ const DESTINATIONS = {
 };
 
 export default class EditPointView extends AbstractStatefulView {
+  #datepickerFrom = null;
+  #datepickerTo = null;
+
   constructor(point) {
     super();
     this._state = EditPointView.parsePointToState(point);
     this._callback = {};
+    this.#setDatepickers();
   }
 
   get template() {
-    const { type, destination, dateFrom, dateTo, basePrice } = this._state;
-
-    const startDate = new Date(dateFrom);
-    const endDate = new Date(dateTo);
-    const startDateValue = startDate.toISOString().slice(0, 16);
-    const endDateValue = endDate.toISOString().slice(0, 16);
+    const { type, destination, basePrice } = this._state;
 
     const typesHtml = TYPES.map((eventType) => `
       <div class="event__type-item">
@@ -125,10 +126,10 @@ export default class EditPointView extends AbstractStatefulView {
             </div>
             <div class="event__field-group  event__field-group--time">
               <label class="visually-hidden" for="event-start-time-1">From</label>
-              <input class="event__input  event__input--time" id="event-start-time-1" type="datetime-local" name="event-start-time" value="${startDateValue}">
+              <input class="event__input  event__input--time" id="event-start-time-1" type="text" name="event-start-time">
               &mdash;
               <label class="visually-hidden" for="event-end-time-1">To</label>
-              <input class="event__input  event__input--time" id="event-end-time-1" type="datetime-local" name="event-end-time" value="${endDateValue}">
+              <input class="event__input  event__input--time" id="event-end-time-1" type="text" name="event-end-time">
             </div>
             <div class="event__field-group  event__field-group--price">
               <label class="event__label" for="event-price-1">
@@ -173,7 +174,59 @@ export default class EditPointView extends AbstractStatefulView {
     this.setFormSubmitHandler(this._callback.formSubmit);
     this.setRollupClickHandler(this._callback.rollupClick);
     this.setCancelClickHandler(this._callback.cancelClick);
+    this.#setDatepickers();
   }
+
+  removeElement() {
+    super.removeElement();
+
+    if (this.#datepickerFrom) {
+      this.#datepickerFrom.destroy();
+      this.#datepickerFrom = null;
+    }
+
+    if (this.#datepickerTo) {
+      this.#datepickerTo.destroy();
+      this.#datepickerTo = null;
+    }
+  }
+
+  #setDatepickers() {
+    this.#datepickerFrom = flatpickr(
+      this.element.querySelector('#event-start-time-1'),
+      {
+        dateFormat: 'd/m/y H:i',
+        enableTime: true,
+        'time_24hr': true,
+        defaultDate: this._state.dateFrom,
+        onChange: this.#dateFromChangeHandler,
+      }
+    );
+
+    this.#datepickerTo = flatpickr(
+      this.element.querySelector('#event-end-time-1'),
+      {
+        dateFormat: 'd/m/y H:i',
+        enableTime: true,
+        'time_24hr': true,
+        defaultDate: this._state.dateTo,
+        minDate: this._state.dateFrom,
+        onChange: this.#dateToChangeHandler,
+      }
+    );
+  }
+
+  #dateFromChangeHandler = ([userDate]) => {
+    this.updateElement({
+      dateFrom: userDate.toISOString(),
+    });
+  };
+
+  #dateToChangeHandler = ([userDate]) => {
+    this.updateElement({
+      dateTo: userDate.toISOString(),
+    });
+  };
 
   #formSubmitHandler = (evt) => {
     evt.preventDefault();

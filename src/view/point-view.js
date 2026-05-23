@@ -1,4 +1,5 @@
 import AbstractView from '../framework/view/abstract-view.js';
+import { humanizeDate, humanizeTime, getPointDuration } from '../utils/date.js';
 
 export default class PointView extends AbstractView {
   #point = null;
@@ -14,14 +15,10 @@ export default class PointView extends AbstractView {
 
     const startDate = new Date(dateFrom);
     const endDate = new Date(dateTo);
-    const dayMonth = startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase();
-    const startTime = startDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-    const endTime = endDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-
-    const durationMs = endDate - startDate;
-    const hours = Math.floor(durationMs / (1000 * 60 * 60));
-    const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
-    const duration = `${hours.toString().padStart(2, '0')}H ${minutes.toString().padStart(2, '0')}M`;
+    const dayMonth = humanizeDate(dateFrom);
+    const startTime = humanizeTime(dateFrom);
+    const endTime = humanizeTime(dateTo);
+    const duration = getPointDuration(dateFrom, dateTo);
 
     const offersHtml = offers.length ? `
       <div class="event__selected-offers">
