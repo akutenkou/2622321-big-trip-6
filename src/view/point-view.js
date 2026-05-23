@@ -73,7 +73,10 @@ export default class PointView extends AbstractView {
 
   setRollupClickHandler(callback) {
     this._callback.rollupClick = callback;
-    this.element.querySelector('.event__rollup-btn').addEventListener('click', callback);
+    const button = this.element.querySelector('.event__rollup-btn');
+    button.addEventListener('click', () => {
+      callback();
+    });
   }
 
   setFavoriteClickHandler(callback) {
