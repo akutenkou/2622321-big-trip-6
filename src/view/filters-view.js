@@ -6,26 +6,42 @@ export default class FiltersView extends AbstractView {
   constructor(filters) {
     super();
     this.#filters = filters;
+    this._callback = {};
   }
 
   get template() {
     return `
       <form class="trip-filters" action="#" method="get">
-        ${this.#filters.map((filter) => `
+        ${this.#filters.map((filter, index) => `
           <div class="trip-filters__filter">
             <input
-              id="filter-${filter.name}"
+              id="filter-${filter.type}"
               class="trip-filters__filter-input  visually-hidden"
               type="radio"
               name="trip-filter"
-              value="${filter.name}"
-              ${filter.isChecked ? 'checked' : ''}
-              ${filter.isDisabled ? 'disabled' : ''}
+              value="${filter.type}"
+              data-filter-type="${filter.type}"
+              ${index === 0 ? 'checked' : ''}
+              ${filter.disabled ? 'disabled' : ''}
             >
-            <label class="trip-filters__filter-label" for="filter-${filter.name}">${filter.name[0].toUpperCase() + filter.name.slice(1)}</label>
+            <label class="trip-filters__filter-label" for="filter-${filter.type}">${filter.name}</label>
           </div>
         `).join('')}
       </form>
     `;
   }
+
+  setFilterTypeChangeHandler(callback) {
+    this._callback.filterTypeChange = callback;
+    this.element.addEventListener('change', this.#filterTypeChangeHandler);
+  }
+
+  #filterTypeChangeHandler = (evt) => {
+    if (evt.target.tagName !== 'INPUT') {
+      return;
+    }
+
+    evt.preventDefault();
+    this._callback.filterTypeChange(evt.target.dataset.filterType);
+  };
 }

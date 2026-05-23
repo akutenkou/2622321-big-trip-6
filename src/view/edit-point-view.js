@@ -48,10 +48,12 @@ const DESTINATIONS = {
 export default class EditPointView extends AbstractStatefulView {
   #datepickerFrom = null;
   #datepickerTo = null;
+  #isNewPoint = false;
 
-  constructor(point) {
+  constructor(point, isNewPoint = false) {
     super();
     this._state = EditPointView.parsePointToState(point);
+    this.#isNewPoint = isNewPoint;
     this._callback = {};
     this.#setDatepickers();
   }
@@ -139,10 +141,8 @@ export default class EditPointView extends AbstractStatefulView {
               <input class="event__input  event__input--price" id="event-price-1" type="text" name="event-price" value="${basePrice}">
             </div>
             <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
-            <button class="event__reset-btn" type="reset">Cancel</button>
-            <button class="event__rollup-btn" type="button">
-              <span class="visually-hidden">Open event</span>
-            </button>
+            <button class="event__reset-btn" type="reset">${this.#isNewPoint ? 'Cancel' : 'Delete'}</button>
+            ${this.#isNewPoint ? '' : '<button class="event__rollup-btn" type="button"><span class="visually-hidden">Open event</span></button>'}
           </header>
           <section class="event__details">
             ${offersHtml}
@@ -160,7 +160,10 @@ export default class EditPointView extends AbstractStatefulView {
 
   setRollupClickHandler(callback) {
     this._callback.rollupClick = callback;
-    this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#rollupClickHandler);
+    const rollupButton = this.element.querySelector('.event__rollup-btn');
+    if (rollupButton) {
+      rollupButton.addEventListener('click', this.#rollupClickHandler);
+    }
   }
 
   setCancelClickHandler(callback) {
@@ -168,12 +171,25 @@ export default class EditPointView extends AbstractStatefulView {
     this.element.querySelector('.event__reset-btn').addEventListener('click', this.#cancelClickHandler);
   }
 
+  setDeleteClickHandler(callback) {
+    this._callback.deleteClick = callback;
+    this.element.querySelector('.event__reset-btn').addEventListener('click', this.#deleteClickHandler);
+  }
+
   _restoreHandlers() {
     this.element.querySelector('.event__type-group').addEventListener('change', this.#typeChangeHandler);
     this.element.querySelector('.event__input--destination').addEventListener('change', this.#destinationChangeHandler);
+    this.element.querySelector('.event__input--price').addEventListener('input', this.#priceInputHandler);
+    this.element.querySelector('.event__input--price').addEventListener('blur', this.#priceChangeHandler);
     this.setFormSubmitHandler(this._callback.formSubmit);
-    this.setRollupClickHandler(this._callback.rollupClick);
-    this.setCancelClickHandler(this._callback.cancelClick);
+
+    if (this.#isNewPoint) {
+      this.setDeleteClickHandler(this._callback.deleteClick);
+    } else {
+      this.setRollupClickHandler(this._callback.rollupClick);
+      this.setDeleteClickHandler(this._callback.deleteClick);
+    }
+
     this.#setDatepickers();
   }
 
@@ -230,7 +246,15 @@ export default class EditPointView extends AbstractStatefulView {
 
   #formSubmitHandler = (evt) => {
     evt.preventDefault();
-    this._callback.formSubmit(evt);
+
+    // Собираем данные из полей формы
+    const form = evt.target;
+    const priceInput = form.querySelector('.event__input--price');
+
+    // Обновляем state перед сохранением
+    this._state.basePrice = parseInt(priceInput.value, 10) || 0;
+
+    this._callback.formSubmit(EditPointView.parseStateToPoint(this._state));
   };
 
   #rollupClickHandler = (evt) => {
@@ -241,6 +265,11 @@ export default class EditPointView extends AbstractStatefulView {
   #cancelClickHandler = (evt) => {
     evt.preventDefault();
     this._callback.cancelClick(evt);
+  };
+
+  #deleteClickHandler = (evt) => {
+    evt.preventDefault();
+    this._callback.deleteClick(evt);
   };
 
   #typeChangeHandler = (evt) => {
@@ -257,7 +286,18 @@ export default class EditPointView extends AbstractStatefulView {
       this.updateElement({
         destination: newDestination
       });
+    } else {
+      evt.target.value = this._state.destination.name;
     }
+  };
+
+  #priceInputHandler = (evt) => {
+    evt.target.value = evt.target.value.replace(/[^\d]/g, '');
+  };
+
+  #priceChangeHandler = (evt) => {
+    const newPrice = parseInt(evt.target.value, 10) || 0;
+    this._setState({ basePrice: newPrice });
   };
 
   static parsePointToState(point) {
