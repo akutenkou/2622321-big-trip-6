@@ -7,11 +7,15 @@ export default class NewPointPresenter {
   #editComponent = null;
   #handleDataChange = null;
   #handleDestroy = null;
+  #destinations = [];
+  #offers = [];
 
-  constructor(container, onDataChange, onDestroy) {
+  constructor(container, onDataChange, onDestroy, destinations, offers) {
     this.#container = container;
     this.#handleDataChange = onDataChange;
     this.#handleDestroy = onDestroy;
+    this.#destinations = destinations;
+    this.#offers = offers;
   }
 
   init() {
@@ -20,7 +24,7 @@ export default class NewPointPresenter {
     }
 
     const blankPoint = this.#createBlankPoint();
-    this.#editComponent = new EditPointView(blankPoint, true);
+    this.#editComponent = new EditPointView(blankPoint, true, this.#destinations, this.#offers);
     this.#editComponent.setFormSubmitHandler(this.#handleFormSubmit);
     this.#editComponent.setDeleteClickHandler(this.#handleDeleteClick);
 
@@ -47,14 +51,17 @@ export default class NewPointPresenter {
   }
 
   #createBlankPoint() {
+    const firstDestination = this.#destinations[0] || {
+      id: 1,
+      name: '',
+      description: '',
+      pictures: []
+    };
+
     return {
       id: null,
       type: 'Flight',
-      destination: {
-        name: 'Amsterdam',
-        description: 'Amsterdam is a city with a rich history and beautiful canals.',
-        pictures: []
-      },
+      destination: firstDestination,
       dateFrom: new Date().toISOString(),
       dateTo: new Date().toISOString(),
       basePrice: 0,

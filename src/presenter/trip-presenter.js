@@ -1,6 +1,7 @@
 import { render, remove } from '../framework/render.js';
 import SortView from '../view/sort-view.js';
 import EmptyView from '../view/empty-view.js';
+import MessageView, { MessageType } from '../view/message-view.js';
 import PointPresenter from './point-presenter.js';
 import NewPointPresenter from './new-point-presenter.js';
 import { SortType, sortByDay, sortByTime, sortByPrice } from '../utils/sort.js';
@@ -12,10 +13,12 @@ export default class TripPresenter {
   #filterModel = null;
   #sortComponent = null;
   #emptyComponent = null;
+  #messageComponent = null;
   #eventsContainer = null;
   #pointPresenters = new Map();
   #newPointPresenter = null;
   #currentSortType = SortType.DAY;
+  #isLoading = true;
 
   constructor(eventsContainer, pointsModel, filterModel) {
     this.#eventsContainer = eventsContainer;
@@ -32,7 +35,17 @@ export default class TripPresenter {
   }
 
   init() {
+    if (this.#isLoading) {
+      this.#renderMessage(MessageType.LOADING);
+      return;
+    }
+
+    this.#clearTrip();
     this.#renderTrip();
+  }
+
+  setLoading(isLoading) {
+    this.#isLoading = isLoading;
   }
 
   createPoint() {
@@ -51,6 +64,11 @@ export default class TripPresenter {
 
     this.#renderSort();
     this.#renderPoints();
+  }
+
+  #renderMessage(message) {
+    this.#messageComponent = new MessageView(message);
+    render(this.#messageComponent, this.#eventsContainer);
   }
 
   #renderEmpty() {
@@ -93,6 +111,11 @@ export default class TripPresenter {
     if (this.#emptyComponent) {
       remove(this.#emptyComponent);
       this.#emptyComponent = null;
+    }
+
+    if (this.#messageComponent) {
+      remove(this.#messageComponent);
+      this.#messageComponent = null;
     }
   }
 

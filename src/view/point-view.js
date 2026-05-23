@@ -11,7 +11,7 @@ export default class PointView extends AbstractView {
   }
 
   get template() {
-    const { type, destination, dateFrom, dateTo, basePrice, offers, isFavorite } = this.#point;
+    const { type, destination, dateFrom, dateTo, basePrice, offers, isFavorite, id } = this.#point;
 
     const startDate = new Date(dateFrom);
     const endDate = new Date(dateTo);
@@ -22,16 +22,19 @@ export default class PointView extends AbstractView {
 
     const offersHtml = offers.length ? `
       <div class="event__selected-offers">
-        ${offers.map((offer) => `
+        ${offers.map((offer) => {
+    const offerSlug = offer.title.replace(/\s+/g, '-').toLowerCase();
+    return `
           <div class="event__offer-selector">
-            <input class="event__offer-checkbox  visually-hidden" id="event-offer-${offer.title}-1" type="checkbox" name="event-offer-${offer.title}" checked>
-            <label class="event__offer-label" for="event-offer-${offer.title}-1">
+            <input class="event__offer-checkbox  visually-hidden" id="event-offer-${offerSlug}-${id}" type="checkbox" name="event-offer-${offer.title}" checked>
+            <label class="event__offer-label" for="event-offer-${offerSlug}-${id}">
               <span class="event__offer-title">${offer.title}</span>
               &plus;&euro;&nbsp;
               <span class="event__offer-price">${offer.price}</span>
             </label>
           </div>
-        `).join('')}
+        `;
+  }).join('')}
       </div>
     ` : '';
 
