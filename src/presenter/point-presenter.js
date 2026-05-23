@@ -68,6 +68,15 @@ export default class PointPresenter {
     this.#editComponent.element.remove();
   }
 
+  setAborting() {
+    if (this.#mode === 'view') {
+      this.#pointComponent.shake();
+      return;
+    }
+
+    this.#editComponent.setAborting();
+  }
+
   #replacePointToForm = () => {
     this.#handleModeChange();
     replace(this.#editComponent, this.#pointComponent);
@@ -97,8 +106,8 @@ export default class PointPresenter {
   };
 
   #handleFormSubmit = (updatedPoint) => {
+    this.#editComponent.setSaving();
     this.#handleViewAction(UserAction.UPDATE_POINT, UpdateType.PATCH, updatedPoint);
-    this.#mode = 'view';
   };
 
   #handleEditRollupClick = () => {
@@ -106,6 +115,7 @@ export default class PointPresenter {
   };
 
   #handleDeleteClick = () => {
+    this.#editComponent.setDeleting();
     this.#handleViewAction(UserAction.DELETE_POINT, UpdateType.MINOR, this.#point);
   };
 }

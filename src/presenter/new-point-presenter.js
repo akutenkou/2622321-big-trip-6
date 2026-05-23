@@ -50,6 +50,14 @@ export default class NewPointPresenter {
     }
   }
 
+  setSaving() {
+    this.#editComponent.setSaving();
+  }
+
+  setAborting() {
+    this.#editComponent.setAborting();
+  }
+
   #createBlankPoint() {
     const firstDestination = this.#destinations[0] || {
       id: 1,
@@ -71,6 +79,7 @@ export default class NewPointPresenter {
   }
 
   #handleFormSubmit = (point) => {
+    this.setSaving();
     this.#handleDataChange(
       UserAction.ADD_POINT,
       UpdateType.MINOR,
