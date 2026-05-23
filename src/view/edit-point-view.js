@@ -22,12 +22,12 @@ export default class EditPointView extends AbstractStatefulView {
   }
 
   get template() {
-    const { type, destination, basePrice, id } = this._state;
+    const { type, destination, basePrice, id, isDisabled, isSaving, isDeleting } = this._state;
     const pointId = id || 'new';
 
     const typesHtml = TYPES.map((eventType) => `
       <div class="event__type-item">
-        <input id="event-type-${eventType.toLowerCase()}-${pointId}" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${eventType.toLowerCase()}" ${type === eventType ? 'checked' : ''}>
+        <input id="event-type-${eventType.toLowerCase()}-${pointId}" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${eventType.toLowerCase()}" ${type === eventType ? 'checked' : ''} ${isDisabled ? 'disabled' : ''}>
         <label class="event__type-label  event__type-label--${eventType.toLowerCase()}" for="event-type-${eventType.toLowerCase()}-${pointId}">${eventType}</label>
       </div>
     `).join('');
@@ -41,7 +41,7 @@ export default class EditPointView extends AbstractStatefulView {
     const offerSlug = offer.title.replace(/\s+/g, '-').toLowerCase();
     return `
             <div class="event__offer-selector">
-              <input class="event__offer-checkbox  visually-hidden" id="event-offer-${offerSlug}-${pointId}" type="checkbox" name="event-offer-${offer.id}" ${isChecked ? 'checked' : ''}>
+              <input class="event__offer-checkbox  visually-hidden" id="event-offer-${offerSlug}-${pointId}" type="checkbox" name="event-offer-${offer.id}" ${isChecked ? 'checked' : ''} ${isDisabled ? 'disabled' : ''}>
               <label class="event__offer-label" for="event-offer-${offerSlug}-${pointId}">
                 <span class="event__offer-title">${offer.title}</span>
                 &plus;&euro;&nbsp;
@@ -82,7 +82,7 @@ export default class EditPointView extends AbstractStatefulView {
                 <span class="visually-hidden">Choose event type</span>
                 <img class="event__type-icon" width="17" height="17" src="img/icons/${type.toLowerCase()}.png" alt="Event type icon">
               </label>
-              <input id="event-type-toggle-${pointId}" class="event__type-toggle  visually-hidden" type="checkbox">
+              <input id="event-type-toggle-${pointId}" class="event__type-toggle  visually-hidden" type="checkbox" ${isDisabled ? 'disabled' : ''}>
               <div class="event__type-list">
                 <fieldset class="event__type-group">
                   <legend class="visually-hidden">Event type</legend>
@@ -94,27 +94,27 @@ export default class EditPointView extends AbstractStatefulView {
               <label class="event__label  event__type-output" for="event-destination-${pointId}">
                 ${type}
               </label>
-              <input class="event__input  event__input--destination" id="event-destination-${pointId}" type="text" name="event-destination" value="${destinationName}" list="destination-list-${pointId}">
+              <input class="event__input  event__input--destination" id="event-destination-${pointId}" type="text" name="event-destination" value="${destinationName}" list="destination-list-${pointId}" ${isDisabled ? 'disabled' : ''}>
               <datalist id="destination-list-${pointId}">
                 ${citiesHtml}
               </datalist>
             </div>
             <div class="event__field-group  event__field-group--time">
               <label class="visually-hidden" for="event-start-time-${pointId}">From</label>
-              <input class="event__input  event__input--time" id="event-start-time-${pointId}" type="text" name="event-start-time">
+              <input class="event__input  event__input--time" id="event-start-time-${pointId}" type="text" name="event-start-time" ${isDisabled ? 'disabled' : ''}>
               &mdash;
               <label class="visually-hidden" for="event-end-time-${pointId}">To</label>
-              <input class="event__input  event__input--time" id="event-end-time-${pointId}" type="text" name="event-end-time">
+              <input class="event__input  event__input--time" id="event-end-time-${pointId}" type="text" name="event-end-time" ${isDisabled ? 'disabled' : ''}>
             </div>
             <div class="event__field-group  event__field-group--price">
               <label class="event__label" for="event-price-${pointId}">
                 <span class="visually-hidden">Price</span>
                 &euro;
               </label>
-              <input class="event__input  event__input--price" id="event-price-${pointId}" type="text" name="event-price" value="${basePrice}">
+              <input class="event__input  event__input--price" id="event-price-${pointId}" type="text" name="event-price" value="${basePrice}" ${isDisabled ? 'disabled' : ''}>
             </div>
-            <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
-            <button class="event__reset-btn" type="reset">${this.#isNewPoint ? 'Cancel' : 'Delete'}</button>
+            <button class="event__save-btn  btn  btn--blue" type="submit" ${isDisabled ? 'disabled' : ''}>${isSaving ? 'Saving...' : 'Save'}</button>
+            <button class="event__reset-btn" type="reset" ${isDisabled ? 'disabled' : ''}>${this.#getResetButtonText(isDeleting)}</button>
             ${this.#isNewPoint ? '' : '<button class="event__rollup-btn" type="button"><span class="visually-hidden">Open event</span></button>'}
           </header>
           <section class="event__details">
@@ -124,6 +124,13 @@ export default class EditPointView extends AbstractStatefulView {
         </form>
       </li>
     `;
+  }
+
+  #getResetButtonText(isDeleting) {
+    if (isDeleting) {
+      return 'Deleting...';
+    }
+    return this.#isNewPoint ? 'Cancel' : 'Delete';
   }
 
   setFormSubmitHandler(callback) {
@@ -147,6 +154,32 @@ export default class EditPointView extends AbstractStatefulView {
   setDeleteClickHandler(callback) {
     this._callback.deleteClick = callback;
     this.element.querySelector('.event__reset-btn').addEventListener('click', this.#deleteClickHandler);
+  }
+
+  setSaving() {
+    this.updateElement({
+      isDisabled: true,
+      isSaving: true,
+    });
+  }
+
+  setDeleting() {
+    this.updateElement({
+      isDisabled: true,
+      isDeleting: true,
+    });
+  }
+
+  setAborting() {
+    const resetFormState = () => {
+      this.updateElement({
+        isDisabled: false,
+        isSaving: false,
+        isDeleting: false,
+      });
+    };
+
+    this.shake(resetFormState);
   }
 
   _restoreHandlers() {
@@ -292,10 +325,19 @@ export default class EditPointView extends AbstractStatefulView {
   };
 
   static parsePointToState(point) {
-    return { ...point };
+    return {
+      ...point,
+      isDisabled: false,
+      isSaving: false,
+      isDeleting: false,
+    };
   }
 
   static parseStateToPoint(state) {
-    return { ...state };
+    const point = { ...state };
+    delete point.isDisabled;
+    delete point.isSaving;
+    delete point.isDeleting;
+    return point;
   }
 }

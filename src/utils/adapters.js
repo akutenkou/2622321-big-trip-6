@@ -22,13 +22,20 @@ export const adaptPointToClient = (point, destinations, offers) => {
   };
 };
 
-export const adaptPointToServer = (point) => ({
-  'id': point.id,
-  'base_price': point.basePrice,
-  'date_from': point.dateFrom,
-  'date_to': point.dateTo,
-  'destination': typeof point.destination === 'object' ? point.destination.id : point.destination,
-  'is_favorite': point.isFavorite,
-  'offers': point.offers.map((offer) => offer.id),
-  'type': point.type.toLowerCase(),
-});
+export const adaptPointToServer = (point) => {
+  const adaptedPoint = {
+    'base_price': point.basePrice,
+    'date_from': point.dateFrom instanceof Date ? point.dateFrom.toISOString() : point.dateFrom,
+    'date_to': point.dateTo instanceof Date ? point.dateTo.toISOString() : point.dateTo,
+    'destination': typeof point.destination === 'object' ? point.destination.id : point.destination,
+    'is_favorite': point.isFavorite,
+    'offers': point.offers.map((offer) => typeof offer === 'object' ? offer.id : offer),
+    'type': point.type.toLowerCase(),
+  };
+
+  if (point.id) {
+    adaptedPoint.id = point.id;
+  }
+
+  return adaptedPoint;
+};
