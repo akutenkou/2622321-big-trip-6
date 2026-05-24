@@ -2,17 +2,19 @@ import AbstractView from '../framework/view/abstract-view.js';
 
 export default class FiltersView extends AbstractView {
   #filters = null;
+  #currentFilter = null;
 
-  constructor(filters) {
+  constructor(filters, currentFilter) {
     super();
     this.#filters = filters;
+    this.#currentFilter = currentFilter;
     this._callback = {};
   }
 
   get template() {
     return `
       <form class="trip-filters" action="#" method="get">
-        ${this.#filters.map((filter, index) => `
+        ${this.#filters.map((filter) => `
           <div class="trip-filters__filter">
             <input
               id="filter-${filter.type}"
@@ -21,7 +23,7 @@ export default class FiltersView extends AbstractView {
               name="trip-filter"
               value="${filter.type}"
               data-filter-type="${filter.type}"
-              ${index === 0 ? 'checked' : ''}
+              ${filter.type === this.#currentFilter ? 'checked' : ''}
               ${filter.disabled ? 'disabled' : ''}
             >
             <label class="trip-filters__filter-label" for="filter-${filter.type}">${filter.name}</label>
