@@ -5,6 +5,7 @@ export default class PointsModel {
   #tripApiService = null;
   #destinations = [];
   #offers = [];
+  #observers = new Set();
 
   constructor(tripApiService) {
     this.#tripApiService = tripApiService;
@@ -20,6 +21,18 @@ export default class PointsModel {
 
   get offers() {
     return this.#offers;
+  }
+
+  addObserver(observer) {
+    this.#observers.add(observer);
+  }
+
+  removeObserver(observer) {
+    this.#observers.delete(observer);
+  }
+
+  #notifyObservers() {
+    this.#observers.forEach((observer) => observer());
   }
 
   async init() {
@@ -56,6 +69,7 @@ export default class PointsModel {
       const response = await this.#tripApiService.updatePoint(updatedPoint);
       const adaptedPoint = adaptPointToClient(response, this.#destinations, this.#offers);
       this.#points[index] = adaptedPoint;
+      this.#notifyObservers();
       return adaptedPoint;
     } catch (err) {
       throw new Error('Can\'t update point');
@@ -67,6 +81,7 @@ export default class PointsModel {
       const response = await this.#tripApiService.addPoint(point);
       const adaptedPoint = adaptPointToClient(response, this.#destinations, this.#offers);
       this.#points.push(adaptedPoint);
+      this.#notifyObservers();
       return adaptedPoint;
     } catch (err) {
       throw new Error('Can\'t add point');
@@ -83,6 +98,7 @@ export default class PointsModel {
     try {
       await this.#tripApiService.deletePoint({id: pointId});
       this.#points.splice(index, 1);
+      this.#notifyObservers();
     } catch (err) {
       throw new Error('Can\'t delete point');
     }

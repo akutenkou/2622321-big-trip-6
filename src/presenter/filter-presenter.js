@@ -1,6 +1,6 @@
-import { render } from '../framework/render.js';
+import { render, replace, remove } from '../framework/render.js';
 import FiltersView from '../view/filters-view.js';
-import { FilterType } from '../utils/filter.js';
+import { FilterType, filter } from '../utils/filter.js';
 import { UpdateType } from '../utils/const.js';
 
 export default class FilterPresenter {
@@ -13,42 +13,57 @@ export default class FilterPresenter {
     this.#container = container;
     this.#filterModel = filterModel;
     this.#pointsModel = pointsModel;
+
+    this.#pointsModel.addObserver(this.#handleModelEvent);
+    this.#filterModel.addObserver(this.#handleModelEvent);
   }
 
   init() {
     const filters = this.#generateFilters();
-    this.#filterComponent = new FiltersView(filters);
+    const prevFilterComponent = this.#filterComponent;
+
+    this.#filterComponent = new FiltersView(filters, this.#filterModel.filter);
     this.#filterComponent.setFilterTypeChangeHandler(this.#handleFilterTypeChange);
-    render(this.#filterComponent, this.#container);
+
+    if (prevFilterComponent === null) {
+      render(this.#filterComponent, this.#container);
+      return;
+    }
+
+    replace(this.#filterComponent, prevFilterComponent);
+    remove(prevFilterComponent);
   }
 
   #generateFilters() {
     const points = this.#pointsModel.getPoints();
-    const hasPoints = points.length > 0;
 
     return [
       {
         type: FilterType.EVERYTHING,
         name: 'Everything',
-        disabled: !hasPoints
+        disabled: filter[FilterType.EVERYTHING](points).length === 0
       },
       {
         type: FilterType.FUTURE,
         name: 'Future',
-        disabled: !hasPoints
+        disabled: filter[FilterType.FUTURE](points).length === 0
       },
       {
         type: FilterType.PRESENT,
         name: 'Present',
-        disabled: !hasPoints
+        disabled: filter[FilterType.PRESENT](points).length === 0
       },
       {
         type: FilterType.PAST,
         name: 'Past',
-        disabled: !hasPoints
+        disabled: filter[FilterType.PAST](points).length === 0
       }
     ];
   }
+
+  #handleModelEvent = () => {
+    this.init();
+  };
 
   #handleFilterTypeChange = (filterType) => {
     if (this.#filterModel.filter === filterType) {
