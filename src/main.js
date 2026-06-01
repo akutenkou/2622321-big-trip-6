@@ -9,16 +9,20 @@ const AUTHORIZATION = `Basic ${Math.random().toString(36).substring(2)}`;
 const END_POINT = 'https://24.objects.htmlacademy.pro/big-trip';
 
 const tripMainElement = document.querySelector('.trip-main');
-const filtersContainer = document.querySelector('.trip-controls__filters');
-const eventsContainer = document.querySelector('.trip-events');
-const newEventButton = document.querySelector('.trip-main__event-add-btn');
+const filtersContainerElement = document.querySelector('.trip-controls__filters');
+const eventsContainerElement = document.querySelector('.trip-events');
+const newEventButtonElement = document.querySelector('.trip-main__event-add-btn');
 
 const tripApiService = new TripApiService(END_POINT, AUTHORIZATION);
 const pointsModel = new PointsModel(tripApiService);
 const filterModel = new FilterModel();
 
-const tripPresenter = new TripPresenter(eventsContainer, pointsModel, filterModel);
-const filterPresenter = new FilterPresenter(filtersContainer, filterModel, pointsModel);
+const enableNewEventButton = () => {
+  newEventButtonElement.disabled = false;
+};
+
+const tripPresenter = new TripPresenter(eventsContainerElement, pointsModel, filterModel, enableNewEventButton);
+const filterPresenter = new FilterPresenter(filtersContainerElement, filterModel, pointsModel);
 const tripInfoPresenter = new TripInfoPresenter(tripMainElement, pointsModel);
 
 tripPresenter.setLoading(true);
@@ -32,17 +36,15 @@ pointsModel.init()
     tripInfoPresenter.init();
   })
   .catch(() => {
-    tripPresenter.setLoading(false);
+    tripPresenter.setLoadError();
     tripPresenter.init();
+    filterPresenter.init();
+    tripInfoPresenter.init();
   });
 
-newEventButton.addEventListener('click', () => {
-  tripPresenter.createPoint();
-  newEventButton.disabled = true;
+newEventButtonElement.addEventListener('click', () => {
+  const isOpened = tripPresenter.createPoint();
+  if (isOpened) {
+    newEventButtonElement.disabled = true;
+  }
 });
-
-const enableNewEventButton = () => {
-  newEventButton.disabled = false;
-};
-
-window.enableNewEventButton = enableNewEventButton;

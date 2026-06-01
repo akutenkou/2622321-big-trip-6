@@ -1,5 +1,9 @@
 import AbstractView from '../framework/view/abstract-view.js';
 import dayjs from 'dayjs';
+import he from 'he';
+
+const TRIP_DATE_FORMAT = 'DD MMM';
+const MAX_FULL_ROUTE_CITIES = 3;
 
 export default class TripInfoView extends AbstractView {
   #points = [];
@@ -12,8 +16,9 @@ export default class TripInfoView extends AbstractView {
   }
 
   get template() {
-    const route = this.#getRoute();
-    const dates = this.#getDates();
+    const sortedPoints = this.#getSortedPoints();
+    const route = this.#getRoute(sortedPoints);
+    const dates = this.#getDates(sortedPoints);
     const cost = this.#getTotalCost();
 
     return `
@@ -23,45 +28,42 @@ export default class TripInfoView extends AbstractView {
           <p class="trip-info__dates">${dates}</p>
         </div>
         <p class="trip-info__cost">
-          Total: &euro;&nbsp;<span class="trip-info__cost-value">${cost}</span>
+          Total: &euro;&nbsp;<span class="trip-info__cost-value">${he.encode(String(cost))}</span>
         </p>
       </section>
     `;
   }
 
-  #getRoute() {
-    if (this.#points.length === 0) {
+  #getSortedPoints() {
+    return [...this.#points].sort((a, b) => dayjs(a.dateFrom).diff(dayjs(b.dateFrom)));
+  }
+
+  #getRoute(sortedPoints) {
+    if (sortedPoints.length === 0) {
       return '';
     }
 
-    const cities = this.#points.map((point) => {
-      const destination = typeof point.destination === 'object'
-        ? point.destination
-        : this.#destinations.find((dest) => dest.id === point.destination);
+    const cities = sortedPoints.map((point) => {
+      const destination = point.destination;
       return destination ? destination.name : '';
     });
 
-    if (cities.length <= 3) {
-      return cities.join(' &mdash; ');
+    if (cities.length <= MAX_FULL_ROUTE_CITIES) {
+      return cities.map((city) => he.encode(city)).join(' &mdash; ');
     }
 
-    return `${cities[0]} &mdash; ... &mdash; ${cities[cities.length - 1]}`;
+    return `${he.encode(cities[0])} &mdash; ... &mdash; ${he.encode(cities[cities.length - 1])}`;
   }
 
-  #getDates() {
-    if (this.#points.length === 0) {
+  #getDates(sortedPoints) {
+    if (sortedPoints.length === 0) {
       return '';
     }
 
-    const sortedPoints = [...this.#points].sort((a, b) => dayjs(a.dateFrom).diff(dayjs(b.dateFrom)));
     const startDate = dayjs(sortedPoints[0].dateFrom);
     const endDate = dayjs(sortedPoints[sortedPoints.length - 1].dateTo);
 
-    if (startDate.month() === endDate.month()) {
-      return `${startDate.format('DD')}&nbsp;&mdash;&nbsp;${endDate.format('DD MMM')}`;
-    }
-
-    return `${startDate.format('DD MMM')}&nbsp;&mdash;&nbsp;${endDate.format('DD MMM')}`;
+    return `${startDate.format(TRIP_DATE_FORMAT).toUpperCase()}&nbsp;&mdash;&nbsp;${endDate.format(TRIP_DATE_FORMAT).toUpperCase()}`;
   }
 
   #getTotalCost() {

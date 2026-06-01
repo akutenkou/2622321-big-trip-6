@@ -1,3 +1,5 @@
+import { capitalize } from './const.js';
+
 export const adaptPointToClient = (point, destinations, offers) => {
   const destination = destinations.find((dest) => dest.id === point.destination);
   const typeOffers = offers.find((offer) => offer.type === point.type.toLowerCase());
@@ -7,7 +9,7 @@ export const adaptPointToClient = (point, destinations, offers) => {
 
   return {
     id: point.id,
-    type: point.type.charAt(0).toUpperCase() + point.type.slice(1),
+    type: capitalize(point.type),
     destination: destination || {
       id: point.destination,
       name: '',
@@ -33,7 +35,7 @@ export const adaptPointToServer = (point) => {
     'type': point.type.toLowerCase(),
   };
 
-  if (point.id) {
+  if (point.id !== null) {
     adaptedPoint.id = point.id;
   }
 

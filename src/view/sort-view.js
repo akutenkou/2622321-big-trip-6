@@ -1,11 +1,8 @@
 import AbstractView from '../framework/view/abstract-view.js';
 
 export default class SortView extends AbstractView {
-  #handleSortTypeChange = null;
-
-  constructor(onSortTypeChange) {
+  constructor() {
     super();
-    this.#handleSortTypeChange = onSortTypeChange;
     this._callback = {};
   }
 

@@ -1,6 +1,6 @@
 import { render, replace, remove } from '../framework/render.js';
 import FiltersView from '../view/filters-view.js';
-import { FilterType, filter } from '../utils/filter.js';
+import { FilterType, Filter } from '../utils/filter.js';
 import { UpdateType } from '../utils/const.js';
 
 export default class FilterPresenter {
@@ -14,8 +14,8 @@ export default class FilterPresenter {
     this.#filterModel = filterModel;
     this.#pointsModel = pointsModel;
 
-    this.#pointsModel.addObserver(this.#handleModelEvent);
-    this.#filterModel.addObserver(this.#handleModelEvent);
+    this.#pointsModel.addObserver(this.#modelEventHandler);
+    this.#filterModel.addObserver(this.#modelEventHandler);
   }
 
   init() {
@@ -23,7 +23,7 @@ export default class FilterPresenter {
     const prevFilterComponent = this.#filterComponent;
 
     this.#filterComponent = new FiltersView(filters, this.#filterModel.filter);
-    this.#filterComponent.setFilterTypeChangeHandler(this.#handleFilterTypeChange);
+    this.#filterComponent.setFilterTypeChangeHandler(this.#filterTypeChangeHandler);
 
     if (prevFilterComponent === null) {
       render(this.#filterComponent, this.#container);
@@ -35,37 +35,37 @@ export default class FilterPresenter {
   }
 
   #generateFilters() {
-    const points = this.#pointsModel.getPoints();
+    const points = this.#pointsModel.points;
 
     return [
       {
         type: FilterType.EVERYTHING,
         name: 'Everything',
-        disabled: filter[FilterType.EVERYTHING](points).length === 0
+        disabled: Filter[FilterType.EVERYTHING](points).length === 0
       },
       {
         type: FilterType.FUTURE,
         name: 'Future',
-        disabled: filter[FilterType.FUTURE](points).length === 0
+        disabled: Filter[FilterType.FUTURE](points).length === 0
       },
       {
         type: FilterType.PRESENT,
         name: 'Present',
-        disabled: filter[FilterType.PRESENT](points).length === 0
+        disabled: Filter[FilterType.PRESENT](points).length === 0
       },
       {
         type: FilterType.PAST,
         name: 'Past',
-        disabled: filter[FilterType.PAST](points).length === 0
+        disabled: Filter[FilterType.PAST](points).length === 0
       }
     ];
   }
 
-  #handleModelEvent = () => {
+  #modelEventHandler = () => {
     this.init();
   };
 
-  #handleFilterTypeChange = (filterType) => {
+  #filterTypeChangeHandler = (filterType) => {
     if (this.#filterModel.filter === filterType) {
       return;
     }

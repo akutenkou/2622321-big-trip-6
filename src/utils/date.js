@@ -3,15 +3,19 @@ import duration from 'dayjs/plugin/duration';
 
 dayjs.extend(duration);
 
-const DATE_FORMAT = 'MMM DD';
-const TIME_FORMAT = 'HH:mm';
-const DATETIME_FORMAT = 'DD/MM/YY HH:mm';
+const DATE_FORMAT = {
+  DATE: 'MMM DD',
+  TIME: 'HH:mm',
+};
 
-const humanizeDate = (date) => dayjs(date).format(DATE_FORMAT);
+const humanizeDate = (date) => dayjs(date).format(DATE_FORMAT.DATE);
 
-const humanizeTime = (date) => dayjs(date).format(TIME_FORMAT);
+const humanizeTime = (date) => dayjs(date).format(DATE_FORMAT.TIME);
 
-const humanizeDateTime = (date) => dayjs(date).format(DATETIME_FORMAT);
+const formatDatetime = (date) => {
+  const d = new Date(date);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+};
 
 const getPointDuration = (dateFrom, dateTo) => {
   const diff = dayjs(dateTo).diff(dayjs(dateFrom));
@@ -32,4 +36,4 @@ const getPointDuration = (dateFrom, dateTo) => {
   return `${minutes.toString().padStart(2, '0')}M`;
 };
 
-export { humanizeDate, humanizeTime, humanizeDateTime, getPointDuration };
+export { humanizeDate, humanizeTime, formatDatetime, getPointDuration };

@@ -10,11 +10,11 @@ export default class TripInfoPresenter {
     this.#container = container;
     this.#pointsModel = pointsModel;
 
-    this.#pointsModel.addObserver(this.#handleModelEvent);
+    this.#pointsModel.addObserver(this.#modelEventHandler);
   }
 
   init() {
-    const points = this.#pointsModel.getPoints();
+    const points = this.#pointsModel.points;
     const destinations = this.#pointsModel.destinations;
 
     if (points.length === 0) {
@@ -42,7 +42,7 @@ export default class TripInfoPresenter {
     }
   }
 
-  #handleModelEvent = () => {
+  #modelEventHandler = () => {
     this.init();
   };
 }

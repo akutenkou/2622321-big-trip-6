@@ -1,78 +1,79 @@
+import Observable from '../framework/observable.js';
 import { adaptPointToClient } from '../utils/adapters.js';
+import { UpdateType } from '../utils/const.js';
 
-export default class PointsModel {
+export default class PointsModel extends Observable {
   #points = [];
   #tripApiService = null;
   #destinations = [];
   #offers = [];
-  #observers = new Set();
 
   constructor(tripApiService) {
+    super();
     this.#tripApiService = tripApiService;
   }
 
-  get points() {
-    return this.#points;
-  }
-
   get destinations() {
-    return this.#destinations;
+    return [...this.#destinations];
   }
 
   get offers() {
-    return this.#offers;
+    return [...this.#offers];
   }
 
-  addObserver(observer) {
-    this.#observers.add(observer);
-  }
-
-  removeObserver(observer) {
-    this.#observers.delete(observer);
-  }
-
-  #notifyObservers() {
-    this.#observers.forEach((observer) => observer());
+  get points() {
+    return [...this.#points];
   }
 
   async init() {
-    try {
-      const [points, destinations, offers] = await Promise.all([
-        this.#tripApiService.points,
-        this.#tripApiService.destinations,
-        this.#tripApiService.offers,
-      ]);
+    const [pointsResult, destinationsResult, offersResult] = await Promise.allSettled([
+      this.#tripApiService.points,
+      this.#tripApiService.destinations,
+      this.#tripApiService.offers,
+    ]);
 
-      this.#destinations = destinations;
-      this.#offers = offers;
-      this.#points = points.map((point) => adaptPointToClient(point, destinations, offers));
-    } catch (err) {
-      this.#points = [];
+    if (destinationsResult.status === 'fulfilled') {
+      this.#destinations = destinationsResult.value;
+    } else {
       this.#destinations = [];
-      this.#offers = [];
-      throw err;
     }
+
+    if (offersResult.status === 'fulfilled') {
+      this.#offers = offersResult.value;
+    } else {
+      this.#offers = [];
+    }
+
+    if (pointsResult.status === 'fulfilled') {
+      this.#points = pointsResult.value.map((point) =>
+        adaptPointToClient(point, this.#destinations, this.#offers)
+      );
+    } else {
+      this.#points = [];
+    }
+
+    if (destinationsResult.status === 'rejected' || offersResult.status === 'rejected') {
+      throw new Error('Failed to load essential data');
+    }
+
+
   }
 
-  getPoints() {
-    return this.#points;
-  }
-
-  async updatePoint(updatedPoint) {
+  async updatePoint(updateType, updatedPoint) {
     const index = this.#points.findIndex((point) => point.id === updatedPoint.id);
 
     if (index === -1) {
-      throw new Error('Can\'t update unexisting point');
+      throw new Error('Can\'t update nonexistent point');
     }
 
     try {
       const response = await this.#tripApiService.updatePoint(updatedPoint);
       const adaptedPoint = adaptPointToClient(response, this.#destinations, this.#offers);
       this.#points[index] = adaptedPoint;
-      this.#notifyObservers();
+      this._notify(updateType);
       return adaptedPoint;
     } catch (err) {
-      throw new Error('Can\'t update point');
+      throw new Error('Can\'t update point', { cause: err });
     }
   }
 
@@ -81,10 +82,10 @@ export default class PointsModel {
       const response = await this.#tripApiService.addPoint(point);
       const adaptedPoint = adaptPointToClient(response, this.#destinations, this.#offers);
       this.#points.push(adaptedPoint);
-      this.#notifyObservers();
+      this._notify(UpdateType.MINOR);
       return adaptedPoint;
     } catch (err) {
-      throw new Error('Can\'t add point');
+      throw new Error('Can\'t add point', { cause: err });
     }
   }
 
@@ -92,15 +93,15 @@ export default class PointsModel {
     const index = this.#points.findIndex((point) => point.id === pointId);
 
     if (index === -1) {
-      throw new Error('Can\'t delete unexisting point');
+      throw new Error('Can\'t delete nonexistent point');
     }
 
     try {
       await this.#tripApiService.deletePoint({id: pointId});
       this.#points.splice(index, 1);
-      this.#notifyObservers();
+      this._notify(UpdateType.MINOR);
     } catch (err) {
-      throw new Error('Can\'t delete point');
+      throw new Error('Can\'t delete point', { cause: err });
     }
   }
 }
